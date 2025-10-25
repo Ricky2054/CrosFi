@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 import { ethers } from 'ethers'
 import { ArrowUpDown, ArrowDownUp, Coins, TrendingUp } from 'lucide-react'
 
@@ -85,8 +85,19 @@ export function VaultActions() {
 
     setLoading(true)
     try {
+      // Check if we're on the correct network
+      const network = await signer.provider!.getNetwork()
+      if (Number(network.chainId) !== 44787) {
+        toast.error('Please switch to Celo Alfajores Testnet to use this application')
+        setLoading(false)
+        return
+      }
+
       const contractService = createContractService(signer.provider!, signer)
-      await contractService.approveToken(selectedToken, depositAmount)
+      const tx = await contractService.approveToken(selectedToken, depositAmount)
+      if (tx && typeof tx.wait === 'function') {
+        await tx.wait()
+      }
       toast.success('Approval successful!')
       
       // Refresh balances
@@ -108,7 +119,11 @@ export function VaultActions() {
       }
     } catch (err: any) {
       console.error('Approval failed:', err)
-      toast.error(`Approval failed: ${err.reason || err.message}`)
+      if (err.message?.includes('network')) {
+        toast.error('Network error: Please ensure you are connected to Celo Alfajores Testnet')
+      } else {
+        toast.error(`Approval failed: ${err.reason || err.message}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -119,9 +134,19 @@ export function VaultActions() {
 
     setLoading(true)
     try {
+      // Check if we're on the correct network
+      const network = await signer.provider!.getNetwork()
+      if (Number(network.chainId) !== 44787) {
+        toast.error('Please switch to Celo Alfajores Testnet to use this application')
+        setLoading(false)
+        return
+      }
+
       const contractService = createContractService(signer.provider!, signer)
       const tx = await contractService.deposit(selectedToken, depositAmount)
-      await tx.wait()
+      if (tx && typeof tx.wait === 'function') {
+        await tx.wait()
+      }
       
       toast.success('Deposit successful!')
       setDepositAmount('')
@@ -146,7 +171,17 @@ export function VaultActions() {
       }
     } catch (err: any) {
       console.error('Deposit failed:', err)
-      toast.error(`Deposit failed: ${err.reason || err.message}`)
+      if (err.message?.includes('network')) {
+        toast.error('Network error: Please ensure you are connected to Celo Alfajores Testnet')
+      } else if (err.message?.includes('Amount below minimum') || err.reason?.includes('Amount below minimum')) {
+        const tokenInfo = getSelectedTokenInfo()
+        toast.error(`Minimum deposit required: 1.0 ${tokenInfo?.symbol || 'tokens'}. Please increase your deposit amount.`)
+      } else if (err.message?.includes('Amount above maximum') || err.reason?.includes('Amount above maximum')) {
+        const tokenInfo = getSelectedTokenInfo()
+        toast.error(`Maximum deposit exceeded. Please reduce your deposit amount.`)
+      } else {
+        toast.error(`Deposit failed: ${err.reason || err.message}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -157,9 +192,28 @@ export function VaultActions() {
 
     setLoading(true)
     try {
+      // Check if we're on the correct network
+      const network = await signer.provider!.getNetwork()
+      if (Number(network.chainId) !== 44787) {
+        toast.error('Please switch to Celo Alfajores Testnet to use this application')
+        setLoading(false)
+        return
+      }
+
       const contractService = createContractService(signer.provider!, signer)
+      
+      // Check if user has shares to withdraw
+      const userStats = await contractService.getUserStats(address!, selectedToken)
+      if (parseFloat(userStats.userShares) < parseFloat(withdrawShares)) {
+        toast.error('Insufficient shares to withdraw')
+        setLoading(false)
+        return
+      }
+
       const tx = await contractService.withdraw(selectedToken, withdrawShares)
-      await tx.wait()
+      if (tx && typeof tx.wait === 'function') {
+        await tx.wait()
+      }
       
       toast.success('Withdrawal successful!')
       setWithdrawShares('')
@@ -167,7 +221,7 @@ export function VaultActions() {
       // Refresh balances
       const token = supportedTokens.find(t => t.address === selectedToken)
       if (token) {
-        const [balance, userStats] = await Promise.all([
+        const [balance, updatedUserStats] = await Promise.all([
           contractService.getTokenBalance(address!, selectedToken),
           contractService.getUserStats(address!, selectedToken)
         ])
@@ -177,14 +231,24 @@ export function VaultActions() {
           [selectedToken]: {
             ...prev[selectedToken],
             balance,
-            shares: userStats.userShares,
-            assetValue: userStats.userAssetBalance
+            shares: updatedUserStats.userShares,
+            assetValue: updatedUserStats.userAssetBalance
           }
         }))
       }
     } catch (err: any) {
       console.error('Withdrawal failed:', err)
-      toast.error(`Withdrawal failed: ${err.reason || err.message}`)
+      
+      // Provide specific error messages
+      if (err.message?.includes('network')) {
+        toast.error('Network error: Please ensure you are connected to Celo Alfajores Testnet')
+      } else if (err.message?.includes('contract') || err.message?.includes('0x0000')) {
+        toast.error('Contract not deployed: Please deploy vault contracts first')
+      } else if (err.message?.includes('insufficient')) {
+        toast.error('Insufficient shares or balance for withdrawal')
+      } else {
+        toast.error(`Withdrawal failed: ${err.reason || err.message}`)
+      }
     } finally {
       setLoading(false)
     }

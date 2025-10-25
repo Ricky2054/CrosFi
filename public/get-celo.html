@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get CELO Tokens - Celo Alfajores Testnet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            color: #2E7D32;
+            margin-bottom: 30px;
+        }
+        .celo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto 20px;
+        }
+        .faucet-button {
+            display: block;
+            width: 100%;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .faucet-button:hover {
+            background: #45a049;
+        }
+        .faucet-button.secondary {
+            background: #2196F3;
+        }
+        .faucet-button.secondary:hover {
+            background: #1976D2;
+        }
+        .status {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .warning {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="celo-icon">C</div>
+            <h1>Get Native CELO Tokens</h1>
+            <p>Celo Alfajores Testnet</p>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ URGENT:</strong> You need CELO tokens for gas fees and vault operations. Get them now!
+        </div>
+
+        <div class="info">
+            <h3>🚰 Faucet Links (Click to Get CELO):</h3>
+            <a href="https://faucets.chain.link/celo-alfajores-testnet" target="_blank" class="faucet-button">
+                🔗 Chainlink Faucet (Recommended)
+            </a>
+            <a href="https://celo.org/developers/faucet" target="_blank" class="faucet-button secondary">
+                🌐 Celo Official Faucet
+            </a>
+            <a href="https://faucet.celo.org/" target="_blank" class="faucet-button secondary">
+                💧 Alternative Faucet
+            </a>
+        </div>
+
+        <div class="step">
+            <h4>📋 Steps to Get CELO:</h4>
+            <ol>
+                <li><strong>Connect MetaMask</strong> - Make sure you're on Celo Alfajores Testnet (Chain ID: 44787)</li>
+                <li><strong>Click a faucet link above</strong></li>
+                <li><strong>Connect your wallet</strong> on the faucet page</li>
+                <li><strong>Request CELO tokens</strong></li>
+                <li><strong>Wait for confirmation</strong></li>
+                <li><strong>Check your MetaMask balance</strong></li>
+            </ol>
+        </div>
+
+        <div class="status">
+            <h4>💰 Expected Results:</h4>
+            <ul>
+                <li>✅ CELO balance will show in MetaMask</li>
+                <li>✅ Estimated value: $0.25 per CELO</li>
+                <li>✅ You can use vault functionality</li>
+                <li>✅ Gas fees will be covered</li>
+            </ul>
+        </div>
+
+        <div class="info">
+            <h4>🔍 Verify Your Balance:</h4>
+            <p>After getting tokens, check:</p>
+            <ul>
+                <li><strong>MetaMask:</strong> Should show CELO balance</li>
+                <li><strong>Vault Page:</strong> NativeTokenFix component will show balance</li>
+                <li><strong>CeloScan:</strong> <a href="https://alfajores.celoscan.io/" target="_blank">https://alfajores.celoscan.io/</a></li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <strong>📝 Important Notes:</strong>
+            <ul>
+                <li>Testnet CELO has no real value</li>
+                <li>You can request multiple times</li>
+                <li>Keep at least 0.1 CELO for gas fees</li>
+                <li>Conversion rate shown is estimated for display</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/vault" style="background: #9C27B0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                🏦 Go to Vault Page
+            </a>
+        </div>
+    </div>
+</body>
+</html>

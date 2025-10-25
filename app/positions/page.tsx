@@ -11,6 +11,8 @@ import {
   formatError
 } from '@/lib/eth';
 import { CONTRACTS, TOKENS, isAdminAddress } from '@/lib/contracts';
+import { PositionMobileCard } from '@/components/position/PositionMobileCard';
+import toast from "react-hot-toast";
 
 interface Position {
   token: string;
@@ -204,11 +206,12 @@ export default function PositionsPage() {
         setSelectedLiquidation(null);
         setRepayAmount('');
         await fetchLiquidationCandidates();
-        console.log('Liquidation successful');
+        toast.success('Liquidation executed successfully');
       }
     } catch (error: any) {
       console.error('Liquidation failed:', error);
       setError(formatError(error));
+      toast.error(`Liquidation failed: ${formatError(error)}`);
     }
   };
 
@@ -232,7 +235,7 @@ export default function PositionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 pb-20 md:pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Positions</h1>
@@ -268,8 +271,8 @@ export default function PositionsPage() {
           </div>
         )}
 
-        {/* Positions Table */}
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        {/* Positions Table - Desktop */}
+        <div className="hidden md:block bg-white rounded-lg shadow-sm border overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold">Token Positions</h2>
           </div>
@@ -346,6 +349,69 @@ export default function PositionsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </div>
+
+        {/* Positions Cards - Mobile */}
+        <div className="block md:hidden space-y-4">
+          <h2 className="text-lg font-semibold">Token Positions</h2>
+          
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="mt-2 text-gray-600">Loading positions...</p>
+            </div>
+          ) : positions.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              No positions found. Start by depositing or borrowing tokens.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {positions.map((position) => {
+                // Convert to mobile card format
+                const mobilePosition = {
+                  token: position.token,
+                  tokenSymbol: position.symbol,
+                  depositedAmount: formatAmount(position.deposit),
+                  earnedInterest: "0.00", // Simplified
+                  currentAPY: 5.2, // Mock APY
+                  shares: formatAmount(position.deposit),
+                  collateralToken: position.token,
+                  collateralTokenSymbol: position.symbol,
+                  borrowToken: position.token,
+                  borrowTokenSymbol: position.symbol,
+                  collateralAmount: formatAmount(position.collateral),
+                  borrowedAmount: formatAmount(position.borrow),
+                  healthFactor: healthFactor,
+                  apr: 8.5, // Mock APR
+                  liquidationPrice: 0.95 // Mock liquidation price
+                };
+
+                const hasDeposits = position.deposit > 0n;
+                const hasBorrows = position.borrow > 0n;
+
+                return (
+                  <div key={position.token} className="space-y-2">
+                    {hasDeposits && (
+                      <PositionMobileCard
+                        position={mobilePosition}
+                        type="lending"
+                        onView={() => toast.info(`View ${position.symbol} lending position`)}
+                        onManage={() => toast.info(`Manage ${position.symbol} lending position`)}
+                      />
+                    )}
+                    {hasBorrows && (
+                      <PositionMobileCard
+                        position={mobilePosition}
+                        type="borrowing"
+                        onView={() => toast.info(`View ${position.symbol} borrowing position`)}
+                        onManage={() => toast.info(`Manage ${position.symbol} borrowing position`)}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

@@ -104,7 +104,7 @@ export default function Markets() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background pb-20 md:pb-8">
       <Header />
       
       <div className="pt-20 pb-20 md:pb-12">

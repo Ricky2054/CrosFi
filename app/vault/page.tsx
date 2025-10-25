@@ -13,10 +13,10 @@ export default function VaultPage() {
   const { isConnected } = useWallet()
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background pb-20 md:pb-8">
       <Header />
       
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -25,9 +25,6 @@ export default function VaultPage() {
               Live
             </Badge>
           </div>
-          <p className="text-xl text-gray-600 mb-6">
-            Maximize your yields on Celo stablecoins with automated optimization
-          </p>
           <ConnectButton />
         </div>
 

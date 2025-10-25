@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Celo Alfajores Testnet Tokens</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            color: #2E7D32;
+            margin-bottom: 30px;
+        }
+        .faucet-link {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px;
+            font-weight: bold;
+        }
+        .faucet-link:hover {
+            background: #45a049;
+        }
+        .token-info {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .token-address {
+            font-family: monospace;
+            background: #e0e0e0;
+            padding: 5px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .steps {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚰 Get Celo Alfajores Testnet Tokens</h1>
+            <p>Get free testnet tokens for development and testing</p>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Important:</strong> These are testnet tokens with no real value. Only use them for testing purposes.
+        </div>
+
+        <div class="steps">
+            <h2>📋 Steps to Get Tokens:</h2>
+            <div class="step">
+                <strong>1. Connect MetaMask</strong><br>
+                Make sure you're on Celo Alfajores Testnet (Chain ID: 44787)
+            </div>
+            <div class="step">
+                <strong>2. Visit Faucets</strong><br>
+                Click the links below to get testnet tokens
+            </div>
+            <div class="step">
+                <strong>3. Request Tokens</strong><br>
+                You can request tokens multiple times from each faucet
+            </div>
+            <div class="step">
+                <strong>4. Wait for Confirmation</strong><br>
+                Tokens will appear in your MetaMask wallet
+            </div>
+        </div>
+
+        <h2>🔗 Faucet Links:</h2>
+        <div style="text-align: center;">
+            <a href="https://celo.org/developers/faucet" target="_blank" class="faucet-link">
+                🌐 Celo Official Faucet
+            </a>
+            <a href="https://faucets.chain.link/celo-alfajores-testnet" target="_blank" class="faucet-link">
+                ⛓️ Chainlink Faucet
+            </a>
+            <a href="https://faucet.celo.org/" target="_blank" class="faucet-link">
+                💧 Alternative Faucet
+            </a>
+        </div>
+
+        <div class="token-info">
+            <h2>🪙 Token Contract Addresses:</h2>
+            <p><strong>cUSD (Celo Dollar):</strong></p>
+            <div class="token-address">0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1</div>
+            
+            <p><strong>cEUR (Celo Euro):</strong></p>
+            <div class="token-address">0x10c892A6EC43a53E45D0B916B4b7D383B1b78C0F</div>
+            
+            <p><strong>cREAL (Celo Brazilian Real):</strong></p>
+            <div class="token-address">0xE4D517785D091D3c54818832dB6094bcc2744545</div>
+        </div>
+
+        <div class="token-info">
+            <h2>🔧 Fix "No Conversion Rate Available":</h2>
+            <p><strong>This is normal for testnet tokens!</strong> MetaMask doesn't show prices for testnet tokens because they have no real value.</p>
+            
+            <h3>Solutions:</h3>
+            <ul>
+                <li><strong>MetaMask Mobile:</strong> Enable "Display fiat values on testnets" in settings</li>
+                <li><strong>Use our app:</strong> The vault page now shows estimated values for testnet tokens</li>
+                <li><strong>Check balances:</strong> Use <a href="https://alfajores.celoscan.io/" target="_blank">CeloScan</a> to verify your token balances</li>
+            </ul>
+        </div>
+
+        <div class="token-info">
+            <h2>📱 How to Add Tokens to MetaMask:</h2>
+            <ol>
+                <li>Open MetaMask</li>
+                <li>Click "Import tokens" at the bottom</li>
+                <li>Select "Custom Token"</li>
+                <li>Enter the contract address, symbol, and decimals (18 for most tokens)</li>
+                <li>Click "Add Custom Token"</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

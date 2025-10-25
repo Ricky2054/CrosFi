@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { WalletProvider } from "@/contexts/WalletContext"
+import { NotificationProvider } from "@/components/NotificationProvider"
 import { BottomNav } from "@/components/mobile/BottomNav"
 import "./globals.css"
 
@@ -30,8 +31,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <WalletProvider>
-            {children}
-            <BottomNav />
+            <NotificationProvider>
+              {children}
+              <BottomNav />
+            </NotificationProvider>
           </WalletProvider>
         </ThemeProvider>
         <Analytics />

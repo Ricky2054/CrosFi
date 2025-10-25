@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useWallet } from "@/contexts/WalletContext"
+import { NetworkStatus } from "@/components/NetworkStatus"
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -30,6 +31,9 @@ export function Header() {
     { label: "Lend", href: "/lend" },
     { label: "Positions", href: "/positions" },
     { label: "Rates", href: "/rates" },
+    { label: "Analytics", href: "/analytics" },
+    { label: "Governance", href: "/governance" },
+    { label: "API Docs", href: "/api-docs" },
   ]
 
   return (
@@ -57,7 +61,8 @@ export function Header() {
         </div>
 
         {/* CTA Button */}
-        <div className="hidden md:flex gap-3">
+        <div className="hidden md:flex gap-3 items-center">
+          <NetworkStatus />
           <ThemeToggle />
           <Button 
             variant="outline" 
@@ -94,14 +99,17 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <div className="pt-4 space-y-2 border-t border-border">
+            <div className="pt-4 space-y-3 border-t border-border">
+              <div className="flex justify-center">
+                <NetworkStatus />
+              </div>
               <div className="flex justify-center">
                 <ThemeToggle />
               </div>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full bg-transparent"
+                className="w-full"
                 onClick={handleWalletClick}
                 disabled={isLoading}
               >
@@ -111,9 +119,6 @@ export function Header() {
                     ? truncateAddress(address)
                     : "Connect Wallet"
                 }
-              </Button>
-              <Button size="sm" className="w-full bg-primary hover:bg-primary/90">
-                Launch App
               </Button>
             </div>
           </div>

@@ -311,6 +311,15 @@ contract MultiTokenVault is ERC20, ReentrancyGuard, Pausable, Ownable {
     }
 
     /**
+     * @dev Get token configuration information
+     * @param token Token address
+     * @return TokenInfo struct with token configuration
+     */
+    function getTokenInfo(address token) external pure returns (TokenConfig.TokenInfo memory) {
+        return TokenConfig.getTokenInfo(token);
+    }
+
+    /**
      * @dev Receive function for CELO deposits
      */
     receive() external payable {

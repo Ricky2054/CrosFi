@@ -105,7 +105,11 @@ async function main() {
   // Deploy MultiTokenVault
   console.log("10. Deploying MultiTokenVault...");
   const MultiTokenVault = await ethers.getContractFactory("MultiTokenVault");
-  const multiTokenVault = await MultiTokenVault.deploy(mentoYieldStrategyAddress);
+  const multiTokenVault = await MultiTokenVault.deploy(
+    "CrosFi Multi-Token Vault",
+    "CFV",
+    mentoYieldStrategyAddress
+  );
   await multiTokenVault.waitForDeployment();
   const multiTokenVaultAddress = await multiTokenVault.getAddress();
   console.log("   ✅ MultiTokenVault deployed to:", multiTokenVaultAddress);
@@ -143,9 +147,7 @@ async function main() {
 
   // Set up MockOracle prices
   console.log("4. Setting up MockOracle prices...");
-  await mockOracle.setPrice("0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1", ethers.parseEther("1")); // 1 cUSD = 1 USD
-  await mockOracle.setPrice("0x41f4C5E67e9Ecf8C2c53d9B25C4c5B4f8C26b6e8", ethers.parseUnits("1", 6)); // 1 USDC = 1 USD
-  await mockOracle.setPrice("0x0000000000000000000000000000000000000000", ethers.parseEther("0.5")); // 1 CELO = 0.5 USD
+  await mockOracle.setPrice(ethers.parseEther("1")); // Set base price to 1 USD
   console.log("   ✅ MockOracle prices set");
 
   console.log("\n💾 Saving Contract Addresses...");
