@@ -2,15 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { 
-  getContract, 
-  formatAmount, 
-  parseAmount,
-  waitForTransaction,
-  getExplorerUrl,
-  formatError
-} from '@/lib/eth';
-import { CONTRACTS, TOKENS, isAdminAddress } from '@/lib/contracts';
+import { createContractService } from '@/lib/contracts';
+import { isAdminAddress } from '@/lib/admin';
 import { PositionMobileCard } from '@/components/position/PositionMobileCard';
 import toast from "react-hot-toast";
 

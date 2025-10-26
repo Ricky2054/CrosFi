@@ -4,7 +4,7 @@
  */
 
 import { ethers } from 'ethers'
-import { getSDK, getSafeInfo } from './safe'
+import { getSDK, getSafeTxUrl } from './safe'
 import { addresses } from './contracts/addresses.json'
 
 export interface SafeTransaction {

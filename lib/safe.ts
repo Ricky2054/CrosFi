@@ -13,7 +13,7 @@ let safeInfo: SafeInfo | null = null
 /**
  * Initialize Safe Apps SDK
  */
-function getSDK(): SafeAppsSDK {
+export function getSDK(): SafeAppsSDK {
   if (!sdk) {
     sdk = new SafeAppsSDK()
   }
