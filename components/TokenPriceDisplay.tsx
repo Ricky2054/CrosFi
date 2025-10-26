@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { TokenIcon } from '@/components/ui/TokenIcon'
 import { ExternalLink } from 'lucide-react'
 
 interface TokenInfo {
@@ -85,9 +86,7 @@ export function TokenPriceDisplay() {
           {tokens.map((token) => (
             <div key={token.symbol} className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {token.symbol.charAt(0)}
-                </div>
+                <TokenIcon symbol={token.symbol} size="md" />
                 <div>
                   <div className="font-semibold">{token.symbol}</div>
                   <div className="text-sm text-gray-600">{token.name}</div>

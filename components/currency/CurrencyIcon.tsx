@@ -2,6 +2,7 @@
 
 import { Currency } from "@/lib/types"
 import { getCurrencyInfo } from "@/lib/currency-config"
+import { TokenIcon } from "@/components/ui/TokenIcon"
 
 interface CurrencyIconProps {
   currency: Currency
@@ -26,12 +27,7 @@ export function CurrencyIcon({
   
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div 
-        className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-bold text-white`}
-        style={{ backgroundColor: info.color }}
-      >
-        {info.flag}
-      </div>
+      <TokenIcon symbol={currency} size={size} />
       {showSymbol && (
         <span className="font-medium text-foreground">
           {info.symbol}

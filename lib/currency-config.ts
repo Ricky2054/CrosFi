@@ -6,6 +6,7 @@ export interface CurrencyInfo {
   color: string
   decimals: number
   address: string
+  iconUrl?: string
 }
 
 export interface ExchangeRate {
@@ -25,7 +26,8 @@ export const CURRENCIES: Record<string, CurrencyInfo> = {
     flag: '🇺🇸',
     color: '#4285F4',
     decimals: 18,
-    address: '0x874069Fa1Ee493706DbeE6Cf34ff9829832e6A00'
+    address: '0x874069Fa1Ee493706DbeE6Cf34ff9829832e6A00',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/200x200/7236.png'
   },
   USDC: {
     symbol: 'USDC',
@@ -33,7 +35,8 @@ export const CURRENCIES: Record<string, CurrencyInfo> = {
     flag: '🇺🇸',
     color: '#2775CA',
     decimals: 6,
-    address: '0x62b8B11039Ff5064145D0D87D32c658Da4CC2Dc1'
+    address: '0x62b8B11039Ff5064145D0D87D32c658Da4CC2Dc1',
+    iconUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbBMfDxr1PrxlKVnOBktTGlNgXSVYUT0LB7Q&s'
   },
   CELO: {
     symbol: 'CELO',
@@ -41,7 +44,8 @@ export const CURRENCIES: Record<string, CurrencyInfo> = {
     flag: '🌱',
     color: '#35D07F',
     decimals: 18,
-    address: '0x0000000000000000000000000000000000000000' // Native token
+    address: '0x0000000000000000000000000000000000000000', // Native token
+    iconUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTz9c2Almn3cdkG4uF5cjKfFJ5-KKf-ZoP-_g&s'
   }
 }
 

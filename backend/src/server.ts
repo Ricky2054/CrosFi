@@ -8,6 +8,7 @@ import { createServer } from 'http';
 import WebSocketService from './websocket';
 import { db } from './services/database';
 import { conversionRateService } from './services/conversionRates';
+import { aiYieldGenerator } from './services/aiYieldGenerator';
 
 const app = express();
 const server = createServer(app);
@@ -289,6 +290,116 @@ app.post('/api/rates/update', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update conversion rates'
+    });
+  }
+});
+
+// AI Yield Generator endpoints
+app.get('/api/ai/recommendations', async (req, res) => {
+  try {
+    const { risk = 'medium' } = req.query;
+    const riskProfile = risk as 'low' | 'medium' | 'high';
+    
+    if (!['low', 'medium', 'high'].includes(riskProfile)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid risk profile. Must be low, medium, or high'
+      });
+    }
+
+    const recommendations = await aiYieldGenerator.generateRecommendations(riskProfile);
+    
+    res.json({
+      success: true,
+      data: recommendations,
+      riskProfile,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching AI recommendations:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch AI recommendations'
+    });
+  }
+});
+
+app.get('/api/ai/token-analysis/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const analysis = await aiYieldGenerator.getTokenAnalysis(token);
+    
+    if (!analysis) {
+      return res.status(404).json({
+        success: false,
+        error: 'Token analysis not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: analysis,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching token analysis:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch token analysis'
+    });
+  }
+});
+
+app.get('/api/ai/market-trends', async (req, res) => {
+  try {
+    const trends = await aiYieldGenerator.getMarketTrends();
+    
+    res.json({
+      success: true,
+      data: trends,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching market trends:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch market trends'
+    });
+  }
+});
+
+app.get('/api/ai/yield-forecast/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const forecast = await aiYieldGenerator.getYieldForecast(token);
+    
+    res.json({
+      success: true,
+      data: forecast,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching yield forecast:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch yield forecast'
+    });
+  }
+});
+
+app.post('/api/ai/refresh', async (req, res) => {
+  try {
+    aiYieldGenerator.clearCache();
+    
+    res.json({
+      success: true,
+      message: 'AI cache cleared successfully'
+    });
+  } catch (error) {
+    console.error('Error refreshing AI cache:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to refresh AI cache'
     });
   }
 });

@@ -64,7 +64,7 @@ export function Hero() {
         {/* Main Heading */}
         <motion.h1 variants={itemVariants} className="text-5xl sm:text-6xl lg:text-7xl font-bold text-balance mb-6">
           Cross-Currency{" "}
-          <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-white">
             Lending on Celo
           </span>
         </motion.h1>

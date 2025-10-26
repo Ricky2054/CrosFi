@@ -26,23 +26,23 @@ export function Header() {
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard" },
+    { label: "AI Yield", href: "/ai-yield", featured: true },
     { label: "Vault", href: "/vault" },
     { label: "Markets", href: "/markets" },
     { label: "Lend", href: "/lend" },
     { label: "Positions", href: "/positions" },
     { label: "Rates", href: "/rates" },
     { label: "Analytics", href: "/analytics" },
-    { label: "Governance", href: "/governance" },
     { label: "API Docs", href: "/api-docs" },
   ]
 
   return (
     <header className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <nav className="px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white text-sm font-bold">
-            CR
+            CL
           </div>
           lCelo
         </Link>
@@ -53,8 +53,13 @@ export function Header() {
             <Link
               key={item.label}
               href={item.href}
-              className="text-foreground hover:text-primary transition-colors text-sm font-medium flex items-center h-full"
+              className={`transition-colors text-sm font-medium flex items-center h-full ${
+                item.featured 
+                  ? 'text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full' 
+                  : 'text-foreground hover:text-primary'
+              }`}
             >
+              {item.featured && '🤖 '}
               {item.label}
             </Link>
           ))}
@@ -98,9 +103,14 @@ export function Header() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="block text-foreground hover:text-primary transition-colors py-2"
+                className={`block transition-colors py-2 ${
+                  item.featured 
+                    ? 'text-blue-600 hover:text-blue-700 font-semibold' 
+                    : 'text-foreground hover:text-primary'
+                }`}
                 onClick={() => setIsOpen(false)}
               >
+                {item.featured && '🤖 '}
                 {item.label}
               </Link>
             ))}

@@ -237,6 +237,41 @@ export interface APYDataPoint {
   [key: string]: number | string // Dynamic keys for each token
 }
 
+// AI Yield Generator Types
+export interface AIRecommendation {
+  token: string
+  symbol: string
+  predictedAPY: number
+  confidenceScore: number
+  riskLevel: 'low' | 'medium' | 'high'
+  reasoning: string
+  currentPrice: number
+  priceChange24h: number
+  volume24h: number
+  marketCap: number
+  volatilityIndex: number
+  liquidityScore: number
+  marketCapRank: number
+  sparkline7d: number[]
+}
+
+export interface MarketTrend {
+  timestamp: string
+  sentiment: 'bullish' | 'bearish' | 'neutral'
+  volumeTrend: number
+  volatilityIndex: number
+  overallScore: number
+}
+
+export interface YieldForecast {
+  token: string
+  predictions: Array<{
+    date: string
+    predictedYield: number
+    confidence: number
+  }>
+}
+
 // Admin-specific interfaces
 export interface ContractEvent {
   type: 'Borrow' | 'Deposit' | 'Withdraw' | 'Liquidation' | 'RateUpdate' | 'Accrue'

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Copy, ExternalLink, CheckCircle, AlertTriangle } from 'lucide-react'
+import { TokenIcon } from '@/components/ui/TokenIcon'
 import { toast } from '@/hooks/use-toast'
 
 interface TokenInfo {
@@ -85,9 +86,7 @@ export function MetaMaskTokenFix() {
           {tokens.map((token) => (
             <div key={token.symbol} className="flex items-center justify-between p-3 bg-white rounded-lg border">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {token.symbol.charAt(0)}
-                </div>
+                <TokenIcon symbol={token.symbol} size="md" />
                 <div>
                   <div className="font-semibold">{token.symbol}</div>
                   <div className="text-sm text-gray-600">{token.name}</div>

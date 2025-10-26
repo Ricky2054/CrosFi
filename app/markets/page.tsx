@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowRight, TrendingUp, TrendingDown, Filter, Search } from "lucide-react"
 import { InfoTooltip } from "@/components/ui/info-tooltip"
+import { TokenIcon } from "@/components/ui/TokenIcon"
 import { cn } from "@/lib/utils"
 import { apiClient } from "@/lib/api-client"
 
@@ -87,15 +88,6 @@ export default function Markets() {
       return `$${(numAmount / 1000).toFixed(0)}K`
     }
     return `$${numAmount.toFixed(0)}`
-  }
-
-  const getTokenIcon = (token: string) => {
-    const icons: { [key: string]: string } = {
-      'cUSD': '🇺🇸',
-      'USDC': '🇺🇸',
-      'CELO': '🌱'
-    }
-    return icons[token] || '💰'
   }
 
   const getTokenColor = (token: string) => {
@@ -271,12 +263,7 @@ export default function Markets() {
                     <tr key={index} className="border-t border-border hover:bg-muted/30 transition-colors">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div 
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
-                            style={{ backgroundColor: getTokenColor(token.token) }}
-                          >
-                            {getTokenIcon(token.token)}
-                          </div>
+                          <TokenIcon symbol={token.token} size="md" />
                           <span className="font-medium">{token.token}</span>
                         </div>
                       </td>

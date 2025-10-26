@@ -20,7 +20,8 @@ import {
   RefreshCw,
   Plus,
   Eye,
-  ArrowUpDown
+  ArrowUpDown,
+  Brain
 } from "lucide-react"
 import { useWallet } from "@/contexts/WalletContext"
 import { 
@@ -218,6 +219,39 @@ export default function Dashboard() {
             />
           </div>
         )}
+
+        {/* AI Recommendations Widget */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-blue-600" />
+              AI Yield Recommendations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Get personalized yield recommendations powered by AI
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    🤖 AI Powered
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Updated every 5 minutes
+                  </span>
+                </div>
+              </div>
+              <Button asChild>
+                <a href="/ai-yield">
+                  <Brain className="h-4 w-4 mr-2" />
+                  View AI Recommendations
+                </a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="lender" className="space-y-6">

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import toast from 'react-hot-toast'
 import { ethers } from 'ethers'
 import { ArrowUpDown, ArrowDownUp, Coins, TrendingUp } from 'lucide-react'
+import { TokenIcon } from '@/components/ui/TokenIcon'
 import { handleTransactionError, executeTransactionAndWait } from '@/lib/transaction-utils'
 
 interface TokenBalance {
@@ -476,7 +477,10 @@ export function VaultActions() {
               return (
                 <div key={token.address} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">{token.symbol}</span>
+                    <div className="flex items-center gap-2">
+                      <TokenIcon symbol={token.symbol} size="sm" />
+                      <span className="font-medium">{token.symbol}</span>
+                    </div>
                     <span className={`text-xs px-2 py-1 rounded ${
                       parseFloat(balance.shares) > 0 
                         ? 'bg-green-100 text-green-800' 
