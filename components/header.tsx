@@ -48,12 +48,12 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-8 h-10">
           {navItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className="text-foreground hover:text-primary transition-colors text-sm font-medium"
+              className="text-foreground hover:text-primary transition-colors text-sm font-medium flex items-center h-full"
             >
               {item.label}
             </Link>
@@ -61,14 +61,19 @@ export function Header() {
         </div>
 
         {/* CTA Button */}
-        <div className="hidden md:flex gap-3 items-center">
-          <NetworkStatus />
-          <ThemeToggle />
+        <div className="hidden md:flex gap-3 items-center h-10">
+          <div className="flex items-center h-full">
+            <NetworkStatus />
+          </div>
+          <div className="flex items-center h-full">
+            <ThemeToggle />
+          </div>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleWalletClick}
             disabled={isLoading}
+            className="h-8"
           >
             {isLoading 
               ? "Connecting..." 

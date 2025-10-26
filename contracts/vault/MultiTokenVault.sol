@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "../libraries/TokenConfig.sol";
 
 /**
@@ -152,7 +153,7 @@ contract MultiTokenVault is ERC20, ReentrancyGuard, Pausable, Ownable {
 
         // Transfer tokens to user
         if (TokenConfig.isNativeToken(token)) {
-            payable(msg.sender).transfer(assets);
+            Address.sendValue(payable(msg.sender), assets);
         } else {
             IERC20(token).transfer(msg.sender, assets);
         }

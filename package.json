@@ -6,7 +6,9 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "backend": "node start-backend.js",
+    "dev:full": "concurrently \"npm run dev\" \"npm run backend\""
   },
   "dependencies": {
     "@chainlink/contracts": "^1.4.0",
@@ -95,6 +97,7 @@
     "@types/react-dom": "^19",
     "chai": "^4.2.0",
     "dotenv": "^17.2.3",
+    "concurrently": "^8.2.2",
     "hardhat": "^2.19.0",
     "hardhat-gas-reporter": "^1.0.8",
     "postcss": "^8.5",

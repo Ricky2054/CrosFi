@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
 import { apiClient, Transaction } from '@/lib/api-client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,38 +20,38 @@ export function TransactionHistory({ limit = 10, showTitle = true }: Transaction
   const [error, setError] = useState<string | null>(null)
   const [backendAvailable, setBackendAvailable] = useState(false)
 
-  useEffect(() => {
+  const fetchTransactions = useCallback(async () => {
     if (!isConnected || !address) {
       setLoading(false)
       return
     }
 
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true)
-        
-        // Check if backend is available
-        const isBackendAvailable = await apiClient.isBackendAvailable()
-        setBackendAvailable(isBackendAvailable)
+    try {
+      setLoading(true)
+      
+      // Check if backend is available
+      const isBackendAvailable = await apiClient.isBackendAvailable()
+      setBackendAvailable(isBackendAvailable)
 
-        if (isBackendAvailable) {
-          // Fetch from backend API
-          const txData = await apiClient.getUserTransactions(address, limit)
-          setTransactions(txData)
-        } else {
-          // Fallback: show empty state with message
-          setTransactions([])
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch transactions')
-        console.error('Error fetching transactions:', err)
-      } finally {
-        setLoading(false)
+      if (isBackendAvailable) {
+        // Fetch from backend API
+        const txData = await apiClient.getUserTransactions(address, limit)
+        setTransactions(txData)
+      } else {
+        // Fallback: show empty state with message
+        setTransactions([])
       }
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch transactions')
+      console.error('Error fetching transactions:', err)
+    } finally {
+      setLoading(false)
     }
-
-    fetchTransactions()
   }, [address, isConnected, limit])
+
+  useEffect(() => {
+    fetchTransactions()
+  }, [fetchTransactions])
 
   const getStatusIcon = (status: string) => {
     switch (status) {

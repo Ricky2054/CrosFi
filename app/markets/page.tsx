@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
@@ -21,20 +21,24 @@ export default function Markets() {
   const [vaultTokens, setVaultTokens] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchVaultTokens = async () => {
-      try {
-        const tokens = await apiClient.getVaultTokens()
-        setVaultTokens(tokens)
-      } catch (error) {
-        console.error('Error fetching vault tokens:', error)
-      } finally {
-        setLoading(false)
-      }
+  const fetchVaultTokens = useCallback(async () => {
+    try {
+      setLoading(true)
+      const tokens = await apiClient.getVaultTokens()
+      setVaultTokens(tokens)
+    } catch (error) {
+      console.error('Error fetching vault tokens:', error)
+      // The API client now provides fallback data, so this should not happen
+      // But we'll keep this as a safety net
+      setVaultTokens([])
+    } finally {
+      setLoading(false)
     }
+  }, [])
 
+  useEffect(() => {
     fetchVaultTokens()
-  }, [apiClient])
+  }, [fetchVaultTokens])
 
   const filteredTokens = vaultTokens
     .filter(token => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
 import { createContractService, TokenInfo } from '@/lib/contracts'
 import { apiClient, TVLData, VaultStats as APIVaultStats } from '@/lib/api-client'
@@ -26,72 +26,72 @@ export function VaultStats() {
   const [error, setError] = useState<string | null>(null)
   const [backendAvailable, setBackendAvailable] = useState(false)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true)
+      
+      // Check if backend is available
+      const isBackendAvailable = await apiClient.isBackendAvailable()
+      setBackendAvailable(isBackendAvailable)
+
+      if (isBackendAvailable) {
+        // Fetch data from backend API
+        const [tvl, vault] = await Promise.all([
+          apiClient.getTVL(),
+          apiClient.getVaultStats()
+        ])
+        setTvlData(tvl)
+        setVaultStats(vault)
+      }
+
+      // Always fetch blockchain data as fallback
+      if (isConnected && provider && signer) {
+        const contractService = createContractService(provider, signer)
+        const supportedTokens = contractService.getSupportedTokens()
         
-        // Check if backend is available
-        const isBackendAvailable = await apiClient.isBackendAvailable()
-        setBackendAvailable(isBackendAvailable)
-
-        if (isBackendAvailable) {
-          // Fetch data from backend API
-          const [tvl, vault] = await Promise.all([
-            apiClient.getTVL(),
-            apiClient.getVaultStats()
-          ])
-          setTvlData(tvl)
-          setVaultStats(vault)
-        }
-
-        // Always fetch blockchain data as fallback
-        if (isConnected && provider && signer) {
-          const contractService = createContractService(provider, signer)
-          const supportedTokens = contractService.getSupportedTokens()
-          
-          const stats: Record<string, TokenStats> = {}
-          
-          for (const token of supportedTokens) {
-            try {
-              const [vaultStats, userStats] = await Promise.all([
-                contractService.getVaultStats(token.address),
-                address ? contractService.getUserStats(address, token.address) : null
-              ])
-              
-              stats[token.symbol] = {
-                totalAssets: vaultStats.totalAssets,
-                totalShares: vaultStats.totalShares,
-                apy: vaultStats.apy,
-                userShares: userStats?.userShares || '0',
-                userAssetBalance: userStats?.userAssetBalance || '0',
-                assetBalance: userStats?.assetBalance || '0'
-              }
-            } catch (err) {
-              console.error(`Error fetching stats for ${token.symbol}:`, err)
-              stats[token.symbol] = {
-                totalAssets: '0',
-                totalShares: '0',
-                apy: 0,
-                userShares: '0',
-                userAssetBalance: '0',
-                assetBalance: '0'
-              }
+        const stats: Record<string, TokenStats> = {}
+        
+        for (const token of supportedTokens) {
+          try {
+            const [vaultStats, userStats] = await Promise.all([
+              contractService.getVaultStats(token.address),
+              address ? contractService.getUserStats(address, token.address) : null
+            ])
+            
+            stats[token.symbol] = {
+              totalAssets: vaultStats.totalAssets,
+              totalShares: vaultStats.totalShares,
+              apy: vaultStats.apy,
+              userShares: userStats?.userShares || '0',
+              userAssetBalance: userStats?.userAssetBalance || '0',
+              assetBalance: userStats?.assetBalance || '0'
+            }
+          } catch (err) {
+            console.error(`Error fetching stats for ${token.symbol}:`, err)
+            stats[token.symbol] = {
+              totalAssets: '0',
+              totalShares: '0',
+              apy: 0,
+              userShares: '0',
+              userAssetBalance: '0',
+              assetBalance: '0'
             }
           }
-          
-          setTokenStats(stats)
         }
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch vault stats')
-        console.error('Error fetching vault stats:', err)
-      } finally {
-        setLoading(false)
+        
+        setTokenStats(stats)
       }
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch vault stats')
+      console.error('Error fetching vault stats:', err)
+    } finally {
+      setLoading(false)
     }
-
-    fetchData()
   }, [isConnected, provider, signer, address])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   if (loading) {
     return (

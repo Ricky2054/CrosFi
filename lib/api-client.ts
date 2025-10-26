@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhos
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 3000, // Reduced timeout for faster fallback
   headers: {
     'Content-Type': 'application/json',
   },
@@ -28,7 +28,17 @@ axiosInstance.interceptors.response.use(
     return response
   },
   (error) => {
-    console.error('API Response Error:', error.response?.data || error.message)
+    // Only log non-network errors to avoid spam
+    if (error.response) {
+      // Server responded with error status
+      console.error('API Response Error:', error.response.data || error.message)
+    } else if (error.request) {
+      // Network error - server didn't respond
+      console.warn('Network Error: Backend server not available, using fallback data')
+    } else {
+      // Something else happened
+      console.error('API Request Error:', error.message)
+    }
     return Promise.reject(error)
   }
 )
@@ -108,65 +118,201 @@ export interface VaultToken {
 }
 
 export class APIClient {
+  private backendAvailable: boolean | null = null
+  private lastCheck: number = 0
+  private readonly CHECK_INTERVAL = 30000 // Check every 30 seconds
+
+  // Check if backend is available with caching
+  private async isBackendAvailableCached(): Promise<boolean> {
+    const now = Date.now()
+    
+    // Return cached result if it's still fresh
+    if (this.backendAvailable !== null && (now - this.lastCheck) < this.CHECK_INTERVAL) {
+      return this.backendAvailable
+    }
+
+    try {
+      await axiosInstance.get('/health', { timeout: 2000 })
+      this.backendAvailable = true
+    } catch (error) {
+      this.backendAvailable = false
+    }
+    
+    this.lastCheck = now
+    return this.backendAvailable
+  }
+
   // Analytics endpoints
   async getTVL(): Promise<TVLData> {
-    const response = await axiosInstance.get('/api/analytics/tvl')
-    return response.data
+    try {
+      const response = await axiosInstance.get('/api/analytics/tvl')
+      return response.data
+    } catch (error) {
+      console.warn('Backend API not available, using fallback TVL data')
+      return {
+        totalTVL: '0',
+        breakdown: [
+          { token: 'CELO', tvl: '0', apy: 8.0 },
+          { token: 'cUSD', tvl: '0', apy: 6.5 },
+          { token: 'USDC', tvl: '0', apy: 5.2 }
+        ]
+      }
+    }
   }
 
   async getAPY(token: string): Promise<APYData> {
-    const response = await axiosInstance.get(`/api/analytics/apy/${token}`)
-    return response.data
+    try {
+      const response = await axiosInstance.get(`/api/analytics/apy/${token}`)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API not available, using fallback APY data')
+      return {
+        token,
+        apy: 6.5,
+        lastUpdated: new Date().toISOString()
+      }
+    }
   }
 
   async getAPYHistory(token: string, days: number = 30): Promise<APYHistoryData[]> {
-    const response = await axiosInstance.get(`/api/analytics/apy-history/${token}?days=${days}`)
-    return response.data
+    try {
+      const response = await axiosInstance.get(`/api/analytics/apy-history/${token}?days=${days}`)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API not available, using fallback APY history')
+      return []
+    }
   }
 
   // User endpoints
   async getUserPositions(address: string): Promise<UserPosition[]> {
-    const response = await axiosInstance.get(`/api/user/${address}/positions`)
-    return response.data
+    try {
+      const response = await axiosInstance.get(`/api/user/${address}/positions`)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API not available, using fallback user positions')
+      return []
+    }
   }
 
   async getUserTransactions(address: string, limit: number = 50, offset: number = 0): Promise<Transaction[]> {
-    const response = await axiosInstance.get(`/api/user/${address}/transactions?limit=${limit}&offset=${offset}`)
-    return response.data
+    try {
+      const response = await axiosInstance.get(`/api/user/${address}/transactions?limit=${limit}&offset=${offset}`)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API not available, using fallback user transactions')
+      return []
+    }
   }
 
   async getUserStats(address: string): Promise<UserStats> {
-    const response = await axiosInstance.get(`/api/user/${address}/stats`)
-    return response.data
+    try {
+      const response = await axiosInstance.get(`/api/user/${address}/stats`)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API not available, using fallback user stats')
+      return {
+        totalDeposits: '0',
+        totalBorrows: '0',
+        totalCollateral: '0',
+        healthFactor: 0,
+        activePositions: 0
+      }
+    }
   }
 
   // Vault endpoints
   async getVaultStats(): Promise<VaultStats> {
-    const response = await axiosInstance.get('/api/vault/stats')
-    return response.data
+    try {
+      const response = await axiosInstance.get('/api/vault/stats')
+      return response.data
+    } catch (error) {
+      console.warn('Backend API not available, using fallback vault stats')
+      return {
+        totalTVL: '0',
+        totalUsers: 0,
+        totalTransactions: 0,
+        averageAPY: 6.5
+      }
+    }
   }
 
   async getVaultTokens(): Promise<VaultToken[]> {
-    const response = await axiosInstance.get('/api/vault/tokens')
-    return response.data
+    // Check if backend is available first
+    const isAvailable = await this.isBackendAvailableCached()
+    
+    if (!isAvailable) {
+      console.warn('Backend API not available, using fallback data')
+      return [
+        {
+          token: 'CELO',
+          totalAssets: '0',
+          apy: 8.0,
+          totalUsers: 0
+        },
+        {
+          token: 'cUSD',
+          totalAssets: '0',
+          apy: 6.5,
+          totalUsers: 0
+        },
+        {
+          token: 'USDC',
+          totalAssets: '0',
+          apy: 5.2,
+          totalUsers: 0
+        }
+      ]
+    }
+
+    try {
+      const response = await axiosInstance.get('/api/vault/tokens')
+      return response.data
+    } catch (error) {
+      console.warn('Backend API request failed, using fallback data')
+      return [
+        {
+          token: 'CELO',
+          totalAssets: '0',
+          apy: 8.0,
+          totalUsers: 0
+        },
+        {
+          token: 'cUSD',
+          totalAssets: '0',
+          apy: 6.5,
+          totalUsers: 0
+        },
+        {
+          token: 'USDC',
+          totalAssets: '0',
+          apy: 5.2,
+          totalUsers: 0
+        }
+      ]
+    }
   }
 
   // Health check
   async getHealth(): Promise<{ status: string; timestamp: string; version: string }> {
-    const response = await axiosInstance.get('/health')
-    return response.data
-  }
-
-  // Utility methods
-  async isBackendAvailable(): Promise<boolean> {
     try {
-      await this.getHealth()
-      return true
+      const response = await axiosInstance.get('/health')
+      return response.data
     } catch (error) {
-      console.warn('Backend not available:', error)
-      return false
+      console.warn('Backend health check failed')
+      return {
+        status: 'offline',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+      }
     }
   }
+
+  // Check if backend is available
+  async isBackendAvailable(): Promise<boolean> {
+    return await this.isBackendAvailableCached()
+  }
+
 
   // Batch requests for better performance
   async getUserDashboard(address: string) {

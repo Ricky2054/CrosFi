@@ -170,27 +170,6 @@ export function CurrencyPairShowcase() {
             )
           })}
         </motion.div>
-
-        {/* View All Pairs CTA */}
-        <motion.div
-          className="text-center mt-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          viewport={{ once: true }}
-        >
-          <p className="text-muted-foreground mb-4">
-            View all {featuredPairs.length} available currency pairs
-          </p>
-          <motion.button
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Explore All Pairs
-            <ArrowRight className="w-4 h-4" />
-          </motion.button>
-        </motion.div>
       </div>
     </section>
   )

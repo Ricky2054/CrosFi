@@ -1,14 +1,25 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Orbitron, Rajdhani } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { WalletProvider } from "@/contexts/WalletContext"
 import { NotificationProvider } from "@/components/NotificationProvider"
 import { BottomNav } from "@/components/mobile/BottomNav"
+import { GlobalErrorHandler } from "@/components/GlobalErrorHandler"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const orbitron = Orbitron({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-orbitron" 
+})
+const rajdhani = Rajdhani({ 
+  subsets: ["latin"], 
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-rajdhani" 
+})
 
 export const metadata: Metadata = {
   title: "Cross-Currency Lending Protocol - Celo",
@@ -23,15 +34,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} font-sans antialiased`}>
+      <body className={`${inter.variable} ${orbitron.variable} ${rajdhani.variable} font-orbitron antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
           <WalletProvider>
             <NotificationProvider>
+              <GlobalErrorHandler />
               {children}
               <BottomNav />
             </NotificationProvider>

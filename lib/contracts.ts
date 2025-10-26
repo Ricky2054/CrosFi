@@ -143,6 +143,11 @@ export class ContractService {
     ]
   }
 
+  // Get CELO-only tokens for lending interface
+  getCeloTokens(): TokenInfo[] {
+    return this.getSupportedTokens().filter(token => token.symbol === 'CELO')
+  }
+
   // Vault functions
   async deposit(tokenAddress: string, amount: string) {
     const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
@@ -156,6 +161,13 @@ export class ContractService {
     const amountWei = tokenInfo.isNative 
       ? ethers.parseEther(amount)
       : ethers.parseUnits(amount, tokenInfo.decimals)
+
+    // Debug logging for deposit
+    console.log('=== DEPOSIT DEBUG ===')
+    console.log('Token address:', tokenAddress)
+    console.log('Amount:', amount, 'Amount Wei:', amountWei.toString())
+    console.log('Is native token:', tokenInfo.isNative)
+    console.log('====================')
 
     if (tokenInfo.isNative) {
       // Native CELO deposit
@@ -175,7 +187,68 @@ export class ContractService {
     }
 
     const sharesWei = ethers.parseEther(shares)
-    const tx = await this.vaultContract.withdraw(tokenAddress, sharesWei)
+    
+    // Debug logging
+    console.log('=== WITHDRAW DEBUG ===')
+    console.log('Token address:', tokenAddress)
+    console.log('Shares:', shares, 'Shares Wei:', sharesWei.toString())
+    console.log('Vault contract address:', addresses.contracts.vault)
+    
+    // Verify we're calling the correct function
+    const withdrawSelector = ethers.id('withdraw(address,uint256)').slice(0, 10)
+    console.log('Expected withdraw selector:', withdrawSelector)
+    
+    // Ensure we're calling the correct withdraw function
+    // The withdraw function should NOT send value (it should receive tokens from the contract)
+    const tx = await this.vaultContract.withdraw(tokenAddress, sharesWei, { value: 0 })
+    
+    console.log('Transaction hash:', tx.hash)
+    console.log('Transaction data:', tx.data)
+    console.log('Transaction value:', tx.value?.toString())
+    
+    // Verify the transaction data contains the correct function selector
+    const actualSelector = tx.data.slice(0, 10)
+    console.log('Actual selector:', actualSelector)
+    
+    if (actualSelector !== withdrawSelector) {
+      throw new Error(`Wrong function called! Expected ${withdrawSelector} but got ${actualSelector}`)
+    }
+    
+    console.log('=====================')
+    
+    return tx
+  }
+
+  // New function to withdraw assets (converts to shares automatically)
+  async withdrawAssets(tokenAddress: string, amount: string) {
+    // Check if vault contract is deployed
+    if (addresses.contracts.vault === '0x0000000000000000000000000000000000000000') {
+      throw new Error('Vault contract not deployed. Please deploy contracts first.')
+    }
+
+    const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
+    if (!tokenInfo) throw new Error('Unsupported token')
+
+    const amountWei = tokenInfo.isNative 
+      ? ethers.parseEther(amount)
+      : ethers.parseUnits(amount, tokenInfo.decimals)
+
+    // Convert assets to shares
+    const shares = await this.vaultContract.convertToShares(tokenAddress, amountWei)
+    
+    // Debug logging
+    console.log('=== WITHDRAW ASSETS DEBUG ===')
+    console.log('Token address:', tokenAddress)
+    console.log('Amount:', amount, 'Amount Wei:', amountWei.toString())
+    console.log('Shares:', shares.toString())
+    console.log('Vault contract address:', addresses.contracts.vault)
+    
+    // Call withdraw with shares
+    const tx = await this.vaultContract.withdraw(tokenAddress, shares)
+    
+    console.log('Transaction hash:', tx.hash)
+    console.log('=====================')
+    
     return tx
   }
 
@@ -350,6 +423,119 @@ export class ContractService {
     return Number(apy) / 100 // Convert basis points to percentage
   }
 
+  // Simple Lending Functions
+  async depositToLendingPool(tokenAddress: string, amount: string) {
+    const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
+    if (!tokenInfo) throw new Error('Unsupported token')
+
+    const amountWei = tokenInfo.isNative 
+      ? ethers.parseEther(amount)
+      : ethers.parseUnits(amount, tokenInfo.decimals)
+
+    if (tokenInfo.isNative) {
+      // Native CELO deposit - use Vault contract which supports native tokens
+      const tx = await this.vaultContract.deposit(tokenAddress, amountWei, { value: amountWei })
+      return tx
+    } else {
+      // ERC20 token deposit - use LendingPool contract
+      const tx = await this.lendingPoolContract.deposit(tokenAddress, amountWei)
+      return tx
+    }
+  }
+
+  async withdrawFromLendingPool(tokenAddress: string, amount: string) {
+    const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
+    if (!tokenInfo) throw new Error('Unsupported token')
+
+    const amountWei = tokenInfo.isNative 
+      ? ethers.parseEther(amount)
+      : ethers.parseUnits(amount, tokenInfo.decimals)
+
+    if (tokenInfo.isNative) {
+      // Native CELO withdrawal - use Vault contract which works with shares
+      // First, convert assets to shares
+      const shares = await this.vaultContract.convertToShares(tokenAddress, amountWei)
+      const tx = await this.vaultContract.withdraw(tokenAddress, shares)
+      return tx
+    } else {
+      // ERC20 token withdrawal - use LendingPool contract
+      const tx = await this.lendingPoolContract.withdraw(tokenAddress, amountWei)
+      return tx
+    }
+  }
+
+  async getUserDeposit(userAddress: string, tokenAddress: string): Promise<string> {
+    try {
+      const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
+      const decimals = tokenInfo?.decimals || 18
+      
+      if (tokenInfo?.isNative) {
+        // For native CELO, get user's vault shares and convert to assets
+        const userShares = await this.vaultContract.userTokenSharesBalance(userAddress, tokenAddress)
+        const totalShares = await this.vaultContract.totalTokenShares(tokenAddress)
+        const totalAssets = await this.vaultContract.totalTokenAssets(tokenAddress)
+        
+        if (totalShares === 0n) return '0'
+        
+        // Convert shares to assets: assets = (userShares * totalAssets) / totalShares
+        const assets = (userShares * totalAssets) / totalShares
+        return ethers.formatUnits(assets, decimals)
+      } else {
+        // For ERC20 tokens, use LendingPool
+        const depositAmount = await this.lendingPoolContract.deposits(tokenAddress, userAddress)
+        return ethers.formatUnits(depositAmount, decimals)
+      }
+    } catch (error: any) {
+      console.warn(`Failed to get user deposit for token ${tokenAddress}:`, error.message)
+      return '0'
+    }
+  }
+
+  async accrueInterestForUser(userAddress: string, tokenAddress: string) {
+    const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
+    
+    if (tokenInfo?.isNative) {
+      // For native CELO in Vault, interest accrues automatically
+      // We can simulate this by just returning a success response
+      // or call a function that triggers interest calculation if available
+      throw new Error('Interest accrues automatically in the Vault contract')
+    } else {
+      // For ERC20 tokens, use LendingPool
+      const tx = await this.lendingPoolContract.accrueFor(userAddress, tokenAddress)
+      return tx
+    }
+  }
+
+  async getSupplyAPY(tokenAddress: string): Promise<number> {
+    try {
+      const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
+      
+      if (tokenInfo?.isNative) {
+        // For native CELO, get APY from Vault contract
+        const apy = await this.vaultContract.getAPY(tokenAddress)
+        return Number(apy) / 100 // Convert basis points to percentage
+      } else {
+        // For ERC20 tokens, use LendingPool and InterestModel
+        const [totalDeposits, totalBorrows] = await Promise.all([
+          this.lendingPoolContract.totalDeposits(tokenAddress),
+          this.lendingPoolContract.totalBorrows(tokenAddress)
+        ])
+
+        const supplyRate = await this.interestModelContract.getSupplyRate(
+          tokenAddress,
+          totalDeposits,
+          totalBorrows,
+          ethers.parseEther('0.1') // 10% reserve factor
+        )
+
+        return Number(ethers.formatEther(supplyRate)) * 100 // Convert to percentage
+      }
+    } catch (error: any) {
+      console.warn(`Failed to get supply APY for token ${tokenAddress}:`, error.message)
+      return 0
+    }
+  }
+
   // Lending functions
   async borrow(collateralToken: string, borrowToken: string, borrowAmount: string) {
     const tokenInfo = this.getSupportedTokens().find(t => t.address === borrowToken)
@@ -420,32 +606,52 @@ export class ContractService {
   // Lending read functions
   async getLendingStats(tokenAddress: string): Promise<LendingStats> {
     try {
-      const [totalDeposits, totalBorrows] = await Promise.all([
-        this.lendingPoolContract.totalDeposits(tokenAddress),
-        this.lendingPoolContract.totalBorrows(tokenAddress)
-      ])
-
       const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
       const decimals = tokenInfo?.decimals || 18
 
-      const totalDepositsFormatted = ethers.formatUnits(totalDeposits, decimals)
-      const totalBorrowsFormatted = ethers.formatUnits(totalBorrows, decimals)
-      
-      const utilizationRate = parseFloat(totalDepositsFormatted) > 0 
-        ? (parseFloat(totalBorrowsFormatted) / parseFloat(totalDepositsFormatted)) * 100
-        : 0
+      if (tokenInfo?.isNative) {
+        // For native CELO, use Vault contract
+        const [totalAssets, apy] = await Promise.all([
+          this.vaultContract.totalTokenAssets(tokenAddress),
+          this.vaultContract.getAPY(tokenAddress)
+        ])
 
-      const [borrowRate, supplyRate] = await Promise.all([
-        this.getBorrowRate(tokenAddress, totalDeposits, totalBorrows),
-        this.getSupplyRate(tokenAddress, totalDeposits, totalBorrows)
-      ])
+        const totalDepositsFormatted = ethers.formatUnits(totalAssets, decimals)
+        const supplyRate = Number(apy) / 100 // Convert basis points to percentage
 
-      return {
-        totalDeposits: totalDepositsFormatted,
-        totalBorrows: totalBorrowsFormatted,
-        utilizationRate,
-        borrowRate,
-        supplyRate
+        return {
+          totalDeposits: totalDepositsFormatted,
+          totalBorrows: '0', // Vault doesn't track borrows
+          utilizationRate: 0, // Vault doesn't have utilization concept
+          borrowRate: 0, // Vault doesn't have borrow rate
+          supplyRate
+        }
+      } else {
+        // For ERC20 tokens, use LendingPool contract
+        const [totalDeposits, totalBorrows] = await Promise.all([
+          this.lendingPoolContract.totalDeposits(tokenAddress),
+          this.lendingPoolContract.totalBorrows(tokenAddress)
+        ])
+
+        const totalDepositsFormatted = ethers.formatUnits(totalDeposits, decimals)
+        const totalBorrowsFormatted = ethers.formatUnits(totalBorrows, decimals)
+        
+        const utilizationRate = parseFloat(totalDepositsFormatted) > 0 
+          ? (parseFloat(totalBorrowsFormatted) / parseFloat(totalDepositsFormatted)) * 100
+          : 0
+
+        const [borrowRate, supplyRate] = await Promise.all([
+          this.getBorrowRate(tokenAddress, totalDeposits, totalBorrows),
+          this.getSupplyRate(tokenAddress, totalDeposits, totalBorrows)
+        ])
+
+        return {
+          totalDeposits: totalDepositsFormatted,
+          totalBorrows: totalBorrowsFormatted,
+          utilizationRate,
+          borrowRate,
+          supplyRate
+        }
       }
     } catch (error: any) {
       console.warn(`Failed to get lending stats for token ${tokenAddress}:`, error.message)
@@ -461,6 +667,13 @@ export class ContractService {
 
   async getBorrowRate(tokenAddress: string, totalDeposits?: bigint, totalBorrows?: bigint): Promise<number> {
     try {
+      const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
+      
+      if (tokenInfo?.isNative) {
+        // For native CELO, Vault doesn't have borrow rate concept
+        return 0
+      }
+
       if (!totalDeposits || !totalBorrows) {
         const [deposits, borrows] = await Promise.all([
           this.lendingPoolContract.totalDeposits(tokenAddress),
@@ -488,6 +701,14 @@ export class ContractService {
 
   async getSupplyRate(tokenAddress: string, totalDeposits?: bigint, totalBorrows?: bigint): Promise<number> {
     try {
+      const tokenInfo = this.getSupportedTokens().find(t => t.address === tokenAddress)
+      
+      if (tokenInfo?.isNative) {
+        // For native CELO, get supply rate from Vault contract
+        const apy = await this.vaultContract.getAPY(tokenAddress)
+        return Number(apy) / 100 // Convert basis points to percentage
+      }
+
       if (!totalDeposits || !totalBorrows) {
         const [deposits, borrows] = await Promise.all([
           this.lendingPoolContract.totalDeposits(tokenAddress),

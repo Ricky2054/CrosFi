@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import toast from 'react-hot-toast'
 import { ethers } from 'ethers'
 import { ArrowUpDown, ArrowDownUp, Coins, TrendingUp } from 'lucide-react'
+import { handleTransactionError, executeTransactionAndWait } from '@/lib/transaction-utils'
 
 interface TokenBalance {
   balance: string
@@ -24,6 +25,8 @@ export function VaultActions() {
   const [selectedToken, setSelectedToken] = useState<string>('')
   const [depositAmount, setDepositAmount] = useState('')
   const [withdrawShares, setWithdrawShares] = useState('')
+  const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [withdrawMode, setWithdrawMode] = useState<'shares' | 'assets'>('assets')
   const [tokenBalances, setTokenBalances] = useState<Record<string, TokenBalance>>({})
   const [loading, setLoading] = useState(false)
   const [supportedTokens, setSupportedTokens] = useState<TokenInfo[]>([])
@@ -94,10 +97,10 @@ export function VaultActions() {
       }
 
       const contractService = createContractService(signer.provider!, signer)
-      const tx = await contractService.approveToken(selectedToken, depositAmount)
-      if (tx && typeof tx.wait === 'function') {
-        await tx.wait()
-      }
+      const { receipt } = await executeTransactionAndWait(
+        () => contractService.approveToken(selectedToken, depositAmount),
+        'Token Approval'
+      )
       toast.success('Approval successful!')
       
       // Refresh balances
@@ -118,12 +121,8 @@ export function VaultActions() {
         }))
       }
     } catch (err: any) {
-      console.error('Approval failed:', err)
-      if (err.message?.includes('network')) {
-        toast.error('Network error: Please ensure you are connected to Celo Alfajores Testnet')
-      } else {
-        toast.error(`Approval failed: ${err.reason || err.message}`)
-      }
+      const errorMessage = handleTransactionError(err, 'Approval')
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -143,10 +142,10 @@ export function VaultActions() {
       }
 
       const contractService = createContractService(signer.provider!, signer)
-      const tx = await contractService.deposit(selectedToken, depositAmount)
-      if (tx && typeof tx.wait === 'function') {
-        await tx.wait()
-      }
+      const { receipt } = await executeTransactionAndWait(
+        () => contractService.deposit(selectedToken, depositAmount),
+        'Token Deposit'
+      )
       
       toast.success('Deposit successful!')
       setDepositAmount('')
@@ -170,25 +169,18 @@ export function VaultActions() {
         }))
       }
     } catch (err: any) {
-      console.error('Deposit failed:', err)
-      if (err.message?.includes('network')) {
-        toast.error('Network error: Please ensure you are connected to Celo Alfajores Testnet')
-      } else if (err.message?.includes('Amount below minimum') || err.reason?.includes('Amount below minimum')) {
-        const tokenInfo = getSelectedTokenInfo()
-        toast.error(`Minimum deposit required: 1.0 ${tokenInfo?.symbol || 'tokens'}. Please increase your deposit amount.`)
-      } else if (err.message?.includes('Amount above maximum') || err.reason?.includes('Amount above maximum')) {
-        const tokenInfo = getSelectedTokenInfo()
-        toast.error(`Maximum deposit exceeded. Please reduce your deposit amount.`)
-      } else {
-        toast.error(`Deposit failed: ${err.reason || err.message}`)
-      }
+      const errorMessage = handleTransactionError(err, 'Deposit')
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
   const handleWithdraw = async () => {
-    if (!signer || !withdrawShares || parseFloat(withdrawShares) <= 0 || !selectedToken) return
+    if (!signer || !selectedToken) return
+    
+    const withdrawValue = withdrawMode === 'shares' ? withdrawShares : withdrawAmount
+    if (!withdrawValue || parseFloat(withdrawValue) <= 0) return
 
     setLoading(true)
     try {
@@ -202,21 +194,37 @@ export function VaultActions() {
 
       const contractService = createContractService(signer.provider!, signer)
       
-      // Check if user has shares to withdraw
+      // Check if user has sufficient balance to withdraw
       const userStats = await contractService.getUserStats(address!, selectedToken)
-      if (parseFloat(userStats.userShares) < parseFloat(withdrawShares)) {
-        toast.error('Insufficient shares to withdraw')
-        setLoading(false)
-        return
+      
+      if (withdrawMode === 'shares') {
+        if (parseFloat(userStats.userShares) < parseFloat(withdrawShares)) {
+          toast.error('Insufficient shares to withdraw')
+          setLoading(false)
+          return
+        }
+      } else {
+        if (parseFloat(userStats.userAssetBalance) < parseFloat(withdrawAmount)) {
+          toast.error('Insufficient assets to withdraw')
+          setLoading(false)
+          return
+        }
       }
 
-      const tx = await contractService.withdraw(selectedToken, withdrawShares)
-      if (tx && typeof tx.wait === 'function') {
-        await tx.wait()
-      }
+      const { receipt } = await executeTransactionAndWait(
+        () => {
+          if (withdrawMode === 'shares') {
+            return contractService.withdraw(selectedToken, withdrawShares)
+          } else {
+            return contractService.withdrawAssets(selectedToken, withdrawAmount)
+          }
+        },
+        'Token Withdrawal'
+      )
       
       toast.success('Withdrawal successful!')
       setWithdrawShares('')
+      setWithdrawAmount('')
       
       // Refresh balances
       const token = supportedTokens.find(t => t.address === selectedToken)
@@ -237,18 +245,8 @@ export function VaultActions() {
         }))
       }
     } catch (err: any) {
-      console.error('Withdrawal failed:', err)
-      
-      // Provide specific error messages
-      if (err.message?.includes('network')) {
-        toast.error('Network error: Please ensure you are connected to Celo Alfajores Testnet')
-      } else if (err.message?.includes('contract') || err.message?.includes('0x0000')) {
-        toast.error('Contract not deployed: Please deploy vault contracts first')
-      } else if (err.message?.includes('insufficient')) {
-        toast.error('Insufficient shares or balance for withdrawal')
-      } else {
-        toast.error(`Withdrawal failed: ${err.reason || err.message}`)
-      }
+      const errorMessage = handleTransactionError(err, 'Withdrawal')
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -372,28 +370,76 @@ export function VaultActions() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="withdraw-shares">Shares to Withdraw</Label>
-              <Input
-                id="withdraw-shares"
-                type="number"
-                value={withdrawShares}
-                onChange={(e) => setWithdrawShares(e.target.value)}
-                placeholder="0.00"
-                className="mt-1"
-                step="0.0001"
-                min="0"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Your shares: {formatNumber(getSelectedTokenBalance().shares)}
-              </p>
-              <p className="text-sm text-green-600 mt-1">
-                Worth: {formatNumber(getSelectedTokenBalance().assetValue)} {getSelectedTokenInfo()?.symbol}
-              </p>
+            {/* Withdraw Mode Selector */}
+            <div className="flex gap-2">
+              <Button
+                variant={withdrawMode === 'assets' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setWithdrawMode('assets')}
+                className="flex-1"
+              >
+                By Amount
+              </Button>
+              <Button
+                variant={withdrawMode === 'shares' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setWithdrawMode('shares')}
+                className="flex-1"
+              >
+                By Shares
+              </Button>
             </div>
 
+            {withdrawMode === 'assets' ? (
+              <div>
+                <Label htmlFor="withdraw-amount">Amount to Withdraw</Label>
+                <Input
+                  id="withdraw-amount"
+                  type="number"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="mt-1"
+                  step="0.0001"
+                  min="0"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Available: {formatNumber(getSelectedTokenBalance().assetValue)} {getSelectedTokenInfo()?.symbol}
+                </p>
+                <p className="text-sm text-blue-600 mt-1">
+                  Shares: {formatNumber(getSelectedTokenBalance().shares)}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="withdraw-shares">Shares to Withdraw</Label>
+                <Input
+                  id="withdraw-shares"
+                  type="number"
+                  value={withdrawShares}
+                  onChange={(e) => setWithdrawShares(e.target.value)}
+                  placeholder="0.00"
+                  className="mt-1"
+                  step="0.0001"
+                  min="0"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Your shares: {formatNumber(getSelectedTokenBalance().shares)}
+                </p>
+                <p className="text-sm text-green-600 mt-1">
+                  Worth: {formatNumber(getSelectedTokenBalance().assetValue)} {getSelectedTokenInfo()?.symbol}
+                </p>
+              </div>
+            )}
+
             <Button
-              onClick={() => setWithdrawShares(getSelectedTokenBalance().shares)}
+              onClick={() => {
+                if (withdrawMode === 'assets') {
+                  setWithdrawAmount(getSelectedTokenBalance().assetValue)
+                } else {
+                  setWithdrawShares(getSelectedTokenBalance().shares)
+                }
+              }}
               variant="outline"
               size="sm"
               className="w-full"
@@ -404,7 +450,7 @@ export function VaultActions() {
 
             <Button
               onClick={handleWithdraw}
-              disabled={loading || !signer || parseFloat(withdrawShares) <= 0}
+              disabled={loading || !signer || (withdrawMode === 'assets' ? parseFloat(withdrawAmount) <= 0 : parseFloat(withdrawShares) <= 0)}
               className="w-full"
             >
               {loading ? 'Withdrawing...' : 'Withdraw'}
